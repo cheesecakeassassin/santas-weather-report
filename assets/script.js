@@ -1,12 +1,12 @@
-// API KEY: 45065de73cc83fdca8eafdd1847f8287
-// One Call API call: https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&exclude={part}&appid=45065de73cc83fdca8eafdd1847f8287
-// Geocoding API call: http://api.openweathermap.org/geo/1.0/direct?q={city name},{state code},{country code}&limit={limit}&appid=45065de73cc83fdca8eafdd1847f8287
-
 var cityFormEl = document.querySelector('#city-form');
-var languageButtonsEl = document.querySelector('#language-buttons');
+var cityButtonsEl = document.querySelector('#city-buttons');
 var cityInputEl = document.querySelector('#city');
 var cityContainerEl = document.querySelector('#city-container');
 var citySearchTerm = document.querySelector('#city-search-term');
+var tempEl = document.createElement('p');
+var windEl = document.createElement('p');
+var humidityEl = document.createElement('p');
+var uvEl = document.createElement('p');
 
 var formSubmitHandler = function (event) {
     // prevent page from refreshing
@@ -28,10 +28,10 @@ var formSubmitHandler = function (event) {
 
 var buttonClickHandler = function (event) {
     // get the language attribute from the clicked element
-    var language = event.target.getAttribute('data-language');
+    var city = event.target.getAttribute('data-city');
 
-    if (language) {
-        getFeaturedRepos(language);
+    if (city) {
+        getGeocode(city);
 
         // clear old content
         cityContainerEl.textContent = '';
@@ -45,13 +45,11 @@ var getGeocode = function (city) {
         city +
         '&limit=1&appid=45065de73cc83fdca8eafdd1847f8287';
 
-    // make a get request to url
+    // Make a get request to url
     fetch(apiUrl)
         .then(function (response) {
-            // request was successful
             if (response.ok) {
                 response.json().then(function (data) {
-                    console.log(data);
                     // Get lat/long
                     var latitude = data[0].lat;
                     var longitude = data[0].lon;
@@ -75,13 +73,11 @@ var getWeatherData = function (latitude, longitude, city) {
         longitude +
         '&exclude={part}&appid=45065de73cc83fdca8eafdd1847f8287';
 
-    // make a get request to url
+    // Make a get request to url
     fetch(apiUrl)
         .then(function (response) {
-            // request was successful
             if (response.ok) {
                 response.json().then(function (data) {
-                    console.log(data);
                     displayWeather(data, city);
                 });
             } else {
@@ -93,76 +89,47 @@ var getWeatherData = function (latitude, longitude, city) {
         });
 };
 
-var getFeaturedRepos = function (language) {
-    // format the github api url
-    var apiUrl =
-        'https://api.github.com/search/repositories?q=' +
-        language +
-        '+is:featured&sort=help-wanted-issues';
-
-    // make a get request to url
-    fetch(apiUrl).then(function (response) {
-        // request was successful
-        if (response.ok) {
-            response.json().then(function (data) {
-                displayRepos(data.items, language);
-            });
-        } else {
-            alert('Error: ' + response.statusText);
-        }
-    });
-};
-
 var displayWeather = function (weatherData, city) {
-    // check if api returned any repos
     if (weatherData.length === 0) {
-        cityContainerEl.textContent = 'No repositories found.';
+        cityContainerEl.textContent = 'No weather data found.';
         return;
     }
 
+    var temp = Math.floor(1.8 * (weatherData.current.temp - 273) + 32) + "°F";
+    var wind = weatherData.current.wind_speed + " MPH";
+    var humidity = weatherData.current.humidity + "%";
+    var uvIndex = weatherData.current.uvi;
+    var iconId = weatherData.current.weather[0].icon;
+    var icon = document.createElement("img");
+
+    // Gets URL of icon for its respective weather condition
+    icon.src = `http://openweathermap.org/img/wn/${iconId}@2x.png`;
+ 
     citySearchTerm.textContent = city + " - " + new Date().toLocaleDateString();
+    citySearchTerm.appendChild(icon);
 
-    // loop over repos
-    for (var i = 0; i < weatherData.length; i++) {
-        // format repo name
-        var repoName = repos[i].owner.login + '/' + repos[i].name;
+    tempEl.textContent = "Temp: " + temp;
+    windEl.textContent = "Wind: " + wind;
+    humidityEl.textContent = "Humidity: " + humidity;
+    uvEl.textContent = "UV Index: " + uvIndex;
 
-        // create a link for each repo
-        var repoEl = document.createElement('a');
-        repoEl.classList =
-            'list-item flex-row justify-space-between align-center';
-        repoEl.setAttribute('href', './single-repo.html?repo=' + repoName);
-
-        // create a span element to hold repository name
-        var titleEl = document.createElement('span');
-        titleEl.textContent = repoName;
-
-        // append to container
-        repoEl.appendChild(titleEl);
-
-        // create a status element
-        var statusEl = document.createElement('span');
-        statusEl.classList = 'flex-row align-center';
-
-        // check if current repo has issues or not
-        if (repos[i].open_issues_count > 0) {
-            statusEl.innerHTML =
-                "<i class='fas fa-times status-icon icon-danger'></i>" +
-                repos[i].open_issues_count +
-                ' issue(s)';
-        } else {
-            statusEl.innerHTML =
-                "<i class='fas fa-check-square status-icon icon-success'></i>";
-        }
-
-        // append to container
-        repoEl.appendChild(statusEl);
-
-        // append container to the dom
-        repoContainerEl.appendChild(repoEl);
+    if (uvIndex < 3)
+    {
+        uvEl.setAttribute("style", "background-color:green");
+    } else if (uvIndex >= 3 && uvIndex < 7)
+    {
+        uvEl.setAttribute("style", "background-color:yellow");
+    } else 
+    {
+        uvEl.setAttribute("style", "background-color:red");
     }
+
+    cityContainerEl.appendChild(tempEl);
+    cityContainerEl.appendChild(windEl);
+    cityContainerEl.appendChild(humidityEl);
+    cityContainerEl.appendChild(uvEl);
 };
 
-// add event listeners to form and button container
+// Add event listeners to form and button container
 cityFormEl.addEventListener('submit', formSubmitHandler);
-languageButtonsEl.addEventListener('click', buttonClickHandler);
+cityButtonsEl.addEventListener('click', buttonClickHandler);
