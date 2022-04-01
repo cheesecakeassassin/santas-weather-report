@@ -41,7 +41,7 @@ var buttonClickHandler = function (event) {
 var getGeocode = function (city) {
     // Format the geocoding api url
     var apiUrl =
-        'http://api.openweathermap.org/geo/1.0/direct?q=' +
+        'https://api.openweathermap.org/geo/1.0/direct?q=' +
         city +
         '&limit=1&appid=45065de73cc83fdca8eafdd1847f8287';
 
@@ -103,7 +103,7 @@ var displayWeather = function (weatherData, city) {
     var icon = document.createElement("img");
 
     // Gets URL of icon for its respective weather condition
-    icon.src = `http://openweathermap.org/img/wn/${iconId}@2x.png`;
+    icon.src = `https://openweathermap.org/img/wn/${iconId}@2x.png`;
  
     citySearchTerm.textContent = city + " - " + new Date().toLocaleDateString();
     citySearchTerm.appendChild(icon);
